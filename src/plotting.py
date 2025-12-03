@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from grid import GridConfig, ind2ser, ser2pos
-from simulation import compute_damage_ratio
+from .grid import GridConfig, ind2ser, ser2pos
+from .simulation import compute_damage_ratio
 
 # keep interactive mode enabled so non-blocking shows work
 plt.ion()

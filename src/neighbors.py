@@ -4,8 +4,8 @@ from typing import Tuple, List
 import numpy as np
 from tqdm import tqdm
 
-from grid import GridConfig, ind2ser, ser2pos
-from geometry import segments_intersect
+from .grid import GridConfig, ind2ser, ser2pos
+from .geometry import segments_intersect
 
 
 def build_neighbors(

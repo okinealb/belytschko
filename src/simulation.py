@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 import numpy as np
 from tqdm import tqdm
 
-from grid import GridConfig, ind2ser
+from .grid import GridConfig, ind2ser
 
 
 @dataclass

@@ -1,9 +1,9 @@
 # Purpose: minimal driver that builds the grid, computes neighbors,
 # runs the projection simulation, and produces plots.
-from grid import GridConfig
-from neighbors import build_neighbors
-from simulation import SimulationParams, run_projection
-from plotting import plot_damage, plot_nbdmap, draw_mesh, animate_history
+from src.grid import GridConfig
+from src.neighbors import build_neighbors
+from src.simulation import SimulationParams, run_projection
+from src.plotting import plot_damage, plot_nbdmap, draw_mesh, animate_history
 
 
 def main():
