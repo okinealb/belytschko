@@ -5,11 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-# keep interactive mode enabled so non-blocking shows work
-plt.ion()
-
 from grid import GridConfig, ind2ser, ser2pos
 from simulation import compute_damage_ratio
+
+# keep interactive mode enabled so non-blocking shows work
+plt.ion()
 
 
 def plot_damage(
@@ -132,3 +132,79 @@ def draw_mesh(
     if not block:
         plt.pause(0.1)
     return
+
+
+def animate_history(
+    history: np.ndarray,
+    Nbd_init: np.ndarray,
+    cfg: GridConfig,
+    step_stride: int = 10,
+    pause: float = 0.02,
+) -> None:
+    """
+    Animate neighbor-count and damage maps using FuncAnimation for replay.
+    - precomputes index map and per-frame stacks for speed
+    - repeats automatically (repeat=True)
+    """
+    from matplotlib import animation
+
+    if not history:
+        print("No history to animate")
+        return
+
+    nx, ny = cfg.nx, cfg.ny
+    n_nodes = cfg.n_nodes
+
+    # map (i,j) -> serial index once, so per-frame mapping is a fast array-index
+    idx_map = np.empty((ny, nx), dtype=int)
+    for i in range(ny):
+        for j in range(nx):
+            idx_map[i, j] = ind2ser(i, j, cfg)
+
+    # downsample frames and precompute stacks
+    frames = history[::step_stride]
+    counts_stack = np.array(
+        [(h >= 0).sum(axis=1) for h in frames]
+    )  # (n_frames, n_nodes)
+    damage_stack = np.array(
+        [compute_damage_ratio(Nbd_init, h) for h in frames]
+    )  # (n_frames, n_nodes)
+
+    # initial 2D arrays for display (use idx_map to reshape)
+    initial_counts = counts_stack[0][idx_map]
+    initial_damage = damage_stack[0][idx_map]
+
+    vmax_counts = int(counts_stack.max()) if counts_stack.size else 1
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    im1 = ax1.imshow(
+        initial_counts, origin="lower", cmap="viridis", vmin=0, vmax=vmax_counts
+    )
+    ax1.set_title("Neighbor count")
+    cbar1 = fig.colorbar(im1, ax=ax1)
+    cbar1.set_label("Neighbor count")
+
+    im2 = ax2.imshow(initial_damage, origin="lower", cmap="inferno", vmin=0, vmax=1)
+    ax2.set_title("Damage ratio (surviving / initial)")
+    cbar2 = fig.colorbar(im2, ax=ax2)
+    cbar2.set_label("Damage ratio")
+
+    plt.tight_layout()
+
+    def update(frame_idx):
+        im1.set_data(counts_stack[frame_idx][idx_map])
+        im2.set_data(damage_stack[frame_idx][idx_map])
+        return im1, im2
+
+    interval_ms = max(int(pause * 1000), 1)
+    ani = animation.FuncAnimation(
+        fig,
+        update,
+        frames=len(frames),
+        interval=interval_ms,
+        blit=False,
+        repeat=True,
+        repeat_delay=1000,
+    )
+
+    plt.show(block=True)
